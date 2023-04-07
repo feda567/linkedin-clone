@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import {connect} from 'react-redux';
 import { signOutAPI } from "../actions";
+
 const Header = (props) => {
   return (
     <Container>
@@ -56,10 +57,10 @@ const Header = (props) => {
             </NavList>
 
             <User>
-              <a>
-                
+              <a>               
                 {props.user && props.user.photoURL ? (
                 <img src={props.user.photoURL} alt=""/>
+
                 
                 ):(<img src="/images/user.svg" alt="" /> 
               )}                

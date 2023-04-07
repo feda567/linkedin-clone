@@ -2,11 +2,9 @@ import styled from "styled-components";
 import { useState } from "react";
 import ReactPlayer from "react-player";
 import {connect} from 'react-redux';
-import firebase from 'firebase/compat/app';
-import {auth,provider,storage} from "../firebase";
-import db from '../firebase';
-import { postArticleAPI } from "../actions";
+import {postArticleAPI} from '../actions';
 import 'firebase/compat/firestore';
+
 
 
 const PostModal = (props) => {
@@ -34,7 +32,6 @@ const PostModal = (props) => {
         console.log('post malone:r');
         e.preventDefault();
         if(e.target !== e.currentTarget){
-            console.log('cake');
             return;
         }
         const payload={
@@ -42,7 +39,7 @@ const PostModal = (props) => {
             video:videoLink,
             user:props.user,
             description:editorText,
-            timestamp : firebase.firestore.Timestamp,
+            timestamp : Date.now(),
         };
         props.postArticle(payload);
         reset(e);
@@ -117,22 +114,15 @@ const PostModal = (props) => {
                 <ShareCreation>
                     <AttachAssets>
                         <AssetButton onClick={()=>switchAssetArea("image")}>
-                            <img src="/images/share-image.svg" alt=""/>
+                            <img src="/images/photo-icon.svg" className="postimg" alt=""/>
                         </AssetButton>
                         <AssetButton onClick={()=>switchAssetArea("media")}>
-                            <img src="/images/share-video.svg" alt=""/>
+                            <img src="/images/video-icon.svg" className="postvid" alt=""/>
                         </AssetButton>
                     </AttachAssets>
-
-                    <ShareComment>
-                    <AssetButton>
-                        <img src="/images/share-comment.svg" alt=""/>
-                        Anyone
-                    </AssetButton>
-                    </ShareComment>
-
                     <PostButton disabled={!editorText ? true : false} 
-                    onClick={(event)=>postArticle(event)}>
+                    onClick={(event)=>postArticle(event)}
+                    >
                         Post
                     </PostButton>
 
@@ -235,6 +225,18 @@ const AssetButton=styled.div`
     height:40px;
     min-width:auto;
     color:rgba(0,0,0,0.5);
+    .postimg{
+      display:flex;
+      width:48px;
+      margin-right:20px;
+      margin-left:13px; 
+    }
+    .postvid{
+      display:flex;
+      width:48px;
+      margin-right:20px;
+      margin-left:30px; 
+    }
 `;
 const AttachAssets=styled.div`
 align-items:center;
