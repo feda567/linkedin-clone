@@ -1,6 +1,6 @@
 import {auth,provider,storage} from "../firebase";
 import {db} from '../firebase';
-import { SET_USER,SET_LOADING_STATUS,GET_ARTICLES } from "./actionType";
+import { SET_USER,SET_LOADING_STATUS,GET_ARTICLES} from "./actionType";
 
 export const setUser=(payload)=>({
     type:SET_USER,
@@ -83,7 +83,8 @@ export function postArticleAPI(payload){
                     },
                     video:payload.video,
                     shareImg:downloadURL,
-                    comments:0,
+                    comments:[],
+                    likes:[],
                     description:payload.description,
                 });
                 dispatch(setLoading(false));
@@ -99,7 +100,8 @@ export function postArticleAPI(payload){
                 },
                 video:payload.video,
                 shareImg:"",
-                comments:0,
+                comments:[],
+                likes:[],
                 description:payload.description,
             });
             dispatch(setLoading(false));
@@ -114,8 +116,15 @@ export function getArticlesAPI(){
         db.collection('articles')
           .orderBy('actor.date','desc')
           .onSnapshot((snapshot)=>{
-            payload=snapshot.docs.map((doc)=>doc.data());
+            payload=snapshot.docs.map((doc)=>{
+                const articleData=doc.data();
+                return{
+                    articleID: doc.id,
+                    ...articleData,
+          };
+        });
             dispatch(getArticles(payload));
         });
     };
 }
+

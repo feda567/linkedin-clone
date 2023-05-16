@@ -4,6 +4,20 @@ import { useState,useEffect } from "react";
 import { connect } from "react-redux";
 import { getArticlesAPI } from "../actions";
 import ReactPlayer from "react-player";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { db,storage } from "../firebase";
+import fuzzyTime from "fuzzy-time";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 
 const Main = (props) => {
@@ -12,6 +26,17 @@ const Main = (props) => {
   useEffect(()=>{
     props.getArticles();
   },[]);
+
+  const fetchLikes = (articleId, likes) => {
+    updateDoc(doc(db, "articles", articleId), {
+      likes: likes.some((l) => l.email === props.user.email)
+        ? likes.filter((l) => l.email !== props.user.email)
+        : [
+            { name: props.user.displayName, email: props.user.email, photo: props.user.photoURL },
+            ...likes,
+          ],
+    });
+  };
 
   const handleClick=(e)=>{
     e.preventDefault();
@@ -101,13 +126,15 @@ const Main = (props) => {
             </a>
           </SharedImg>
           <SocialCounts>
-            <li>
-              <button>
-                <img src="https://static-exp1.licdn.com/sc/h/d310t2g24pvdy4pt1jkedo4yb" alt=""/>
-                <img src="https://static-exp1.licdn.com/sc/h/5thsbmikm6a8uov24ygwd914f" alt=""/>
-                <span>75</span>
-              </button>
-            </li>
+          <li>
+                {article.likes.length > 0 && (
+                  <img
+                    src="https://static-exp1.licdn.com/sc/h/8ekq8gho1ruaf8i7f86vd1ftt"
+                    alt="likes"
+                  />
+                )}
+                <span>{article.likes.length}</span>
+              </li>
             <li>
               <a>
               {article.comments}
@@ -115,10 +142,23 @@ const Main = (props) => {
               </li>
           </SocialCounts>
           <SocialActions>
-          <button>
-            <img src="/images/like-icon.svg" alt=""/>
-            <span>Like</span>
-          </button>
+          <button
+                className={
+                  article.likes.some((l) => l.email === props.user.email) ? "active" : ""
+                }
+                onClick={(e) => {
+                  fetchLikes(article.articleID, article.likes);
+                }}
+              >
+                <img className="unLiked" src='./images/like-icon.svg' alt="" />
+                <img
+                  className="liked"
+                  src="https://static-exp1.licdn.com/sc/h/5zhd32fqi5pxwzsz78iui643e"
+                  alt="like"
+                />
+
+                <span>Like</span>
+              </button>
           <button>
             <img src="/images/comments-icon.svg" alt=""/>
             <span>Comments</span>
@@ -322,7 +362,28 @@ const SocialActions=styled.div`
     padding:8px;
     color:#0a66c2;
     border:none;
-      background-color:white;
+    background-color:white;
+    .liked{
+      display:none;
+    }
+    .unLiked{
+      display:inline-block;
+    }
+
+    &:hover{
+      background-color: rgba(0, 0, 0, 0.08);
+    }
+
+    &.active {
+      color: #0a66c2;
+      .liked {
+        display: inline-block;
+      }
+      .unLiked {
+        display: none;
+      }
+    }
+      
     @media(min-width:768px){
       span{
         margin-left:8px;
@@ -341,7 +402,12 @@ const mapStateToProps=(state)=>{
   return{
     loading:state.articleState.loading,
     user:state.userState.user,
-    articles:state.articleState.articles,
+    articles:state.articleState.articles.map((article)=>({
+      ...article,
+      articleID:state.articleState.articles.find((a)=>a.id===article.id)
+      .articleID,
+    })),
+    articleIDs: state.articleState.articles.map((article) => article.articleID),
   };
 };
 const mapDispatchToProps=(dispatch)=>({
