@@ -1,7 +1,8 @@
-import { SET_LOADING_STATUS,GET_ARTICLES} from "../actions/actionType";
+import { SET_LOADING_STATUS,GET_ARTICLES,ADD_COMMENT,ADD_LIKES } from "../actions/actionType";
 export const initState={
     articles:[],
     loading:false,
+    likedArticles:[],
 };
 
 const articleReducer=(state=initState,action)=>{
@@ -20,5 +21,7 @@ const articleReducer=(state=initState,action)=>{
             return state;
     }
 };
+
+
 
 export default articleReducer;

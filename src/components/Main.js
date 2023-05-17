@@ -4,21 +4,9 @@ import { useState,useEffect } from "react";
 import { connect } from "react-redux";
 import { getArticlesAPI } from "../actions";
 import ReactPlayer from "react-player";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-  updateDoc,
-} from "firebase/firestore";
-import { db,storage } from "../firebase";
+import {doc,updateDoc} from "firebase/firestore";
+import { db } from "../firebase";
 import fuzzyTime from "fuzzy-time";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-
 
 const Main = (props) => {
   const [showModal,setShowModal]=useState("close");
@@ -105,7 +93,7 @@ const Main = (props) => {
             <div>
               <span>{article.actor.title}</span>
               <span>{article.actor.description}</span>
-              <span>{Date()}</span>
+              <span>{fuzzyTime(article.actor.date)}</span>
             </div>
           </a>
           <button>
