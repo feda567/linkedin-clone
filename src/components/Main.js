@@ -10,22 +10,26 @@ import fuzzyTime from "fuzzy-time";
 
 const Main = (props) => {
   const [showModal,setShowModal]=useState("close");
+  const [articleLikes, setArticleLikes] = useState({});
 
   useEffect(()=>{
     props.getArticles();
   },[]);
 
   const fetchLikes = (articleId, likes) => {
+    const updatedLikes = likes.some((l) => l.email === props.user.email)
+      ? likes.filter((l) => l.email !== props.user.email)
+      : [
+          { name: props.user.displayName, email: props.user.email, photo: props.user.photoURL },
+          ...likes,
+        ];
+  
+    // Update the likes in the database or API
     updateDoc(doc(db, "articles", articleId), {
-      likes: likes.some((l) => l.email === props.user.email)
-        ? likes.filter((l) => l.email !== props.user.email)
-        : [
-            { name: props.user.displayName, email: props.user.email, photo: props.user.photoURL },
-            ...likes,
-          ],
+      likes: updatedLikes,
     });
   };
-
+  
   const handleClick=(e)=>{
     e.preventDefault();
     if(e.target!==e.currentTarget){
@@ -131,13 +135,13 @@ const Main = (props) => {
           </SocialCounts>
           <SocialActions>
           <button
-                className={
-                  article.likes.some((l) => l.email === props.user.email) ? "active" : ""
-                }
-                onClick={(e) => {
-                  fetchLikes(article.articleID, article.likes);
-                }}
-              >
+      className={
+        article.likes.some((l) => l.email === props.user.email) ? "active" : ""
+      }
+      onClick={(e) => {
+        fetchLikes(article.id, article.likes);
+      }}
+    >
                 <img className="unLiked" src='./images/like-icon.svg' alt="" />
                 <img
                   className="liked"
@@ -392,10 +396,10 @@ const mapStateToProps=(state)=>{
     user:state.userState.user,
     articles:state.articleState.articles.map((article)=>({
       ...article,
-      articleID:state.articleState.articles.find((a)=>a.id===article.id)
-      .articleID,
+      id:state.articleState.articles.find((a)=>a.id===article.id)
+      .id,
     })),
-    articleIDs: state.articleState.articles.map((article) => article.articleID),
+    articleIDs: state.articleState.articles.map((article) => article.id),
   };
 };
 const mapDispatchToProps=(dispatch)=>({

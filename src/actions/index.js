@@ -119,7 +119,7 @@ export function getArticlesAPI(){
             payload=snapshot.docs.map((doc)=>{
                 const articleData=doc.data();
                 return{
-                    articleID: doc.id,
+                    id: doc.id,
                     ...articleData,
           };
         });
