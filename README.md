@@ -1,4 +1,4 @@
-LINKEDIN -CLONE
+# LINKEDIN -CLONE
 
-  using react redux and firebase
+# A LinkedIn - Clone developed using React,Redux and Firebase
   
