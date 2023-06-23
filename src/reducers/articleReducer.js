@@ -1,4 +1,4 @@
-import { SET_LOADING_STATUS,GET_ARTICLES} from "../actions/actionType";
+import { SET_LOADING_STATUS,GET_ARTICLES,SET_USER} from "../actions/actionType";
 export const initState={
     articles:[],
     loading:false,

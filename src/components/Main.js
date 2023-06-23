@@ -1,22 +1,39 @@
-import styled from "styled-components";
+
 import PostModal from "./PostModal";
 import { useState,useEffect } from "react";
 import { connect } from "react-redux";
 import { getArticlesAPI } from "../actions";
 import ReactPlayer from "react-player";
-import {doc,updateDoc} from "firebase/firestore";
-import { db } from "../firebase";
 import fuzzyTime from "fuzzy-time";
+import { db } from "../firebase";
+import {updateDoc,doc} from "firebase/firestore";
+import Comment from "./Comment";
+import {
+  Container,
+  ShareBox,
+  Article,
+  SharedActor,
+  Description,
+  SharedImg,
+  SocialCounts,
+  SocialActions,
+  Content
+} from './StyleMain';
 
 const Main = (props) => {
   const [showModal,setShowModal]=useState("close");
-  const [articleLikes, setArticleLikes] = useState({});
+  const [showComments, setShowComments] = useState([]);
 
   useEffect(()=>{
     props.getArticles();
   },[]);
 
   const fetchLikes = (articleId, likes) => {
+    const user = props.user;
+  if (!user|| !user.email) {
+    // User is not available, handle the error or return
+    return;
+  }
     const updatedLikes = likes.some((l) => l.email === props.user.email)
       ? likes.filter((l) => l.email !== props.user.email)
       : [
@@ -29,7 +46,8 @@ const Main = (props) => {
       likes: updatedLikes,
     });
   };
-  
+
+
   const handleClick=(e)=>{
     e.preventDefault();
     if(e.target!==e.currentTarget){
@@ -68,11 +86,17 @@ const Main = (props) => {
       <div>
         <button>
           <img src="/images/photo-icon.svg" alt=""/>
-          <span>Photo</span>
+          <span onClick={handleClick}
+            disabled={props.loading ? true:false}>
+               Photo
+          </span>
         </button>
         <button>
           <img src="/images/video-icon.svg" alt=""/>
-          <span>Video</span>
+          <span onClick={handleClick}
+             disabled={props.loading ? true:false}>
+              Video
+          </span>
         </button>
         <button>
           <img src="/images/event-icon.svg" alt=""/>
@@ -100,9 +124,6 @@ const Main = (props) => {
               <span>{fuzzyTime(article.actor.date)}</span>
             </div>
           </a>
-          <button>
-          <img src="/images/ellipsis.svg" alt=""/>
-          </button>
           </SharedActor>
           <Description>
           {article.description}
@@ -110,7 +131,7 @@ const Main = (props) => {
           <SharedImg>
           <a>
               {
-                !article.shareImg && article.video ? (<ReactPlayer width={'100%'} url={article.video} />
+                !article.shareImg && article.video ? (<ReactPlayer width={'100%'} url={article.video} controls={true} />
                 ):(
                   article.shareImg && <img src={article.shareImg}/>
                 )
@@ -125,33 +146,35 @@ const Main = (props) => {
                     alt="likes"
                   />
                 )}
-                <span>{article.likes.length}</span>
+                <span>
+                  {article.likes.length} {article.likes.length === 1 ? " like • " : " likes •"}
+                </span>
               </li>
-            <li>
-              <a>
-              {article.comments}
-              </a>
+              <li onClick={() => setShowComments((prev) => [...prev, article.id])}>
+              <p className="comments">
+                {article.comments ? (article.comments.length === 1 ? '1 comment' : `${article.comments.length} comments`) : '0 comments'}
+              </p>
+
               </li>
           </SocialCounts>
           <SocialActions>
           <button
-      className={
-        article.likes.some((l) => l.email === props.user.email) ? "active" : ""
-      }
-      onClick={(e) => {
-        fetchLikes(article.id, article.likes);
-      }}
-    >
-                <img className="unLiked" src='./images/like-icon.svg' alt="" />
+                className={
+                  article.likes.some((l) => l.email === props.user.email) ? "active" : ""
+                }
+                onClick={(e) => {
+                  fetchLikes(article.id, article.likes);
+                }}
+              >
+                <img className="unLiked" src="/images/like.svg" alt="like" />
                 <img
                   className="liked"
                   src="https://static-exp1.licdn.com/sc/h/5zhd32fqi5pxwzsz78iui643e"
                   alt="like"
                 />
-
-                <span>Like</span>
-              </button>
-          <button>
+            <span>Like</span>
+          </button>
+          <button onClick={() => setShowComments((prev) => [...prev, article.id])}>
             <img src="/images/comments-icon.svg" alt=""/>
             <span>Comments</span>
           </button>
@@ -165,6 +188,14 @@ const Main = (props) => {
           </button>
           
           </SocialActions>
+          {showComments.includes(article.id) && (
+              <Comment
+                photo={props.user?.photoURL}
+                comments={article.comments}
+                user={props.user}
+                id={article.id}
+              />
+            )}
       </Article>
     ))}
       </Content>
@@ -174,222 +205,7 @@ const Main = (props) => {
     );
 };
 
-const Container = styled.div`
-  grid-area: main;
-`;
 
-const CommonCard=styled.div`
-  text-align:center;
-  overflow:hidden;
-  margin-bottom: 8px;
-  background-color:#fff;
-  border-radius:5px;
-  position:relative;
-  border:none;
-  box-shadow:0 0 0 1px rgb(0 0 0 /15%), 0 0 0 rgb(0 0 0 /20%);
-  `;
-
-const ShareBox=styled(CommonCard)`
- display:flex;
- flex-direction:column;
- color:#958b7b;
- margin:0 0 8px;
- background:white;
- div{
-    button{
-      outline:none;
-      color:rgb(0,0,0,.6);
-      font-size:14px;
-      line-height:1.5;
-      min-height:48px;
-      background:transparent;
-      border:none;
-      display:flex;
-      align-items:center;
-      font-weight:600;
-    }
-    :first-child{
-      display:flex;
-      align-items: center;
-      padding:8px 16px 0px 16px;
-      img{
-        width:48px;
-        border-radius:50%;
-        margin-right:8px;
-      }
-      button{
-        margin:4px 0;
-        flex-grow:1;
-        border-radius:35px;
-        padding-left:16px;
-        border:1px solid rgba(0,0,0,.15);
-        background-color:white;
-        text-align:left;
-      }
-    }
-    :nth-child(2){
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:space-around;
-      padding-bottom:4px;
-      button{
-        img{
-          margin:0 4px 0 -2px;
-        }
-        span{
-          color:#70b5f9;
-        }
-      }
-    }
- }
-  `;
-
-const Article=styled(CommonCard)`
-  padding:0;
-  margin:0 0 8px;
-  overflow:visible;
-  `;
-
-const SharedActor=styled.div`
-  padding-right:40px;
-  flex-wrap:nowrap;
-  padding:12px 16px 0;
-  margin-bottom:8px;
-  align-items:center;
-  display:flex;
-  a{
-    margin-right:12px;
-    flex-grow:1;
-    overflow:hidden;
-    display:flex;
-    text-decoration:none;
-
-    img{
-      width:48px;
-      height:48px;
-    }
-    >div{
-      display:flex;
-      flex-direction:column;
-      flex-grow:1;
-      flex-basis:0;
-      margin-left:8px;
-      overflow:hidden;
-
-      span{
-        text-align:left;
-        :first-child{
-          font-size:14px;
-          font-weight:700;
-          color:rgba(0,0,0,1);
-        }
-        :nth-child(n+1){
-          font-size:12px;
-          color:rgba(0,0,0,0.6);
-        }
-      }
-    }
-  }
-  button{
-    position:absolute;
-    right:12px;
-    top: 0;
-    background:transparent;
-    border:none;
-    outline:none;
-    padding:.5px;
-  }
-`;
-
-const Description=styled.div`
-  padding:0 16px;
-  overflow:hidden;
-  color:rgba(0,0,0,.9);
-  font-size:14px;
-  text-align:left;
-    `;
-
-const SharedImg=styled.div`
-  margin-top:8px;
-  width:100%;
-  display:block;
-  position:relative;
-  background-color:#f9fafb;
-  img{
-    object-fit:contain;
-    width:100%;
-    height:100%;
-  }
-`;
-
-const SocialCounts=styled.ul`
-  line-height:1.3;
-  display:flex;
-  align-items:flex-start;
-  overflow:auto;
-  margin:0 16px;
-  padding:8px 0;
-  border-bottom:1px solid #e9e5df;
-  list-style:none;
-  li{
-    margin-right:5px;
-    font-size:12px;
-    button{
-      display:flex;
-      border:none;
-      background-color:white;
-    }
-  }
-`;
-const SocialActions=styled.div`
-  align-items:center;
-  display:flex;
-  margin:0;
-  justify-content:flex-start;
-  min-height:40px;
-  padding:4px 8px;
-  button{
-    display:inline-flex;
-    align-items:center;
-    padding:8px;
-    color:#0a66c2;
-    border:none;
-    background-color:white;
-    .liked{
-      display:none;
-    }
-    .unLiked{
-      display:inline-block;
-    }
-
-    &:hover{
-      background-color: rgba(0, 0, 0, 0.08);
-    }
-
-    &.active {
-      color: #0a66c2;
-      .liked {
-        display: inline-block;
-      }
-      .unLiked {
-        display: none;
-      }
-    }
-      
-    @media(min-width:768px){
-      span{
-        margin-left:8px;
-      }
-
-    }
-  }
-`;
-const Content=styled.div`
-    text-align:center;
-    &>img{
-      width:30px;
-    }
-`;
 const mapStateToProps=(state)=>{
   return{
     loading:state.articleState.loading,
